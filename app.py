@@ -17,7 +17,8 @@ def defineFlowRegime(reynoldsNum):
     else:
         return 'Transition'
 
-def calculateFrictionFactor(reynoldsNum, roughness, flowRegime, diameter):    
+def calculateFrictionFactor(reynoldsNum, roughness, diameter):    
+    flowRegime = defineFlowRegime(reynoldsNum)
     frictionInLaminar = 64 / reynoldsNum
     # 0.02 is an initial guess
     frictionInTurbulent = fsolve(calculateFrictionInTurbulent(roughness, reynoldsNum, diameter), 0.02)
@@ -25,9 +26,9 @@ def calculateFrictionFactor(reynoldsNum, roughness, flowRegime, diameter):
     if flowRegime == 'Laminar':
         return frictionInLaminar
     elif flowRegime == 'Turbulent':
-        return frictionInTurbulent
+        return frictionInTurbulent[0]
     else:
-        return (frictionInTurbulent + frictionInLaminar) / 2
+        return (frictionInTurbulent[0] + frictionInLaminar) / 2
 
 def calculateFrictionInTurbulent(roughness, reynoldsNum, diameter):
     return lambda friction: (1 / np.sqrt(friction)) + 2 * np.log10(((roughness / diameter) / 3.7) + (2.51 / (reynoldsNum * np.sqrt(friction))))
@@ -47,26 +48,18 @@ def returnValidatedUserInput(msg):
     return userInput
        
 def main():
-    # [kg/m^3]
     density = returnValidatedUserInput('Density (kg/m^3): ')
-    # [Pa.s]
     viscosity = returnValidatedUserInput('Viscosity (Pa.S): ') 
-
-    # [m]
+    volumetricFlowRate = returnValidatedUserInput('Volumetric Flow Rate (m^3 / s): ')
+    
     diameter = returnValidatedUserInput('Diameter (m): ')
-    # [m]
     length = returnValidatedUserInput('Length of the pipe (m): ')
-    # [m]
     roughness = returnValidatedUserInput('Roughness of the pipe (m): ')
 
-    # [m^3 / s]
-    volumetricFlowRate = returnValidatedUserInput('Volumetric Flow Rate (m^3 / s): ')
-
     averageVelocity = calculateAverageVelocity(volumetricFlowRate, diameter)
-
     reynoldsNum = calculateReynolds(averageVelocity, diameter, viscosity, density)
     flowRegime = defineFlowRegime(reynoldsNum)
-    friction, = calculateFrictionFactor(reynoldsNum, roughness, flowRegime, diameter)
+    friction = calculateFrictionFactor(reynoldsNum, roughness, diameter)
     pressureDrop = calculatePressureDrop(friction, length, diameter, density, averageVelocity)
 
     uptoFourDecimalsFormatter = "%.4f"
