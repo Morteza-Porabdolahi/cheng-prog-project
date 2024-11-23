@@ -58,8 +58,7 @@ def returnValidatedUserInput(msg):
 
     return userInput
 
-
-def main():
+def getInputsFromUser():
     density = returnValidatedUserInput("Density (kg/m^3): ")
     viscosity = returnValidatedUserInput("Viscosity (Pa.S): ")
     volumetricFlowRate = returnValidatedUserInput("Volumetric Flow Rate (m^3 / s): ")
@@ -67,6 +66,11 @@ def main():
     diameter = returnValidatedUserInput("Diameter (m): ")
     length = returnValidatedUserInput("Length of the pipe (m): ")
     roughness = returnValidatedUserInput("Roughness of the pipe (m): ")
+
+    return [density, viscosity, volumetricFlowRate, diameter, length, roughness]
+
+def main():
+    density, viscosity, volumetricFlowRate, diameter, length, roughness = getInputsFromUser();
 
     averageVelocity = calculateAverageVelocity(volumetricFlowRate, diameter)
     reynoldsNum = calculateReynolds(averageVelocity, diameter, viscosity, density)
