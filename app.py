@@ -1,7 +1,6 @@
 from scipy.optimize import fsolve
 import numpy as np
 
-
 def calculateAverageVelocity(volumetricFlowRate, diameter):
     areaOfPipe = np.pi * (diameter / 2) ** 2
 
@@ -20,9 +19,7 @@ def defineFlowRegime(reynoldsNum):
     else:
         return "Transition"
 
-
-def calculateFrictionFactor(reynoldsNum, roughness, diameter):
-    flowRegime = defineFlowRegime(reynoldsNum)
+def calculateFrictionFactor(reynoldsNum, roughness, diameter, flowRegime):
     frictionInLaminar = 64 / reynoldsNum
     # 0.02 is an initial guess
     frictionInTurbulent = fsolve(
@@ -47,12 +44,12 @@ def calculatePressureDrop(friction, length, diameter, density, averageVelocity):
     return friction * (length / diameter) * ((density * averageVelocity**2) / 2)
 
 
-def returnValidatedUserInput(msg):
+def returnValidatedUserInput(message):
     while True:
         try:
-            userInput = float(input(msg))
+            userInput = float(input(message))
         except ValueError:
-            print("Please enter a valid input!")
+            print("\033[31mPlease enter a valid input!\033[0m")
         else:
             break
 
@@ -67,7 +64,9 @@ def getInputsFromUser():
     length = returnValidatedUserInput("Length of the pipe (m): ")
     roughness = returnValidatedUserInput("Roughness of the pipe (m): ")
 
-    return [density, viscosity, volumetricFlowRate, diameter, length, roughness]
+    userInputs = [density, viscosity, volumetricFlowRate, diameter, length, roughness]
+
+    return userInputs
 
 def main():
     density, viscosity, volumetricFlowRate, diameter, length, roughness = getInputsFromUser();
@@ -75,7 +74,7 @@ def main():
     averageVelocity = calculateAverageVelocity(volumetricFlowRate, diameter)
     reynoldsNum = calculateReynolds(averageVelocity, diameter, viscosity, density)
     flowRegime = defineFlowRegime(reynoldsNum)
-    friction = calculateFrictionFactor(reynoldsNum, roughness, diameter)
+    friction = calculateFrictionFactor(reynoldsNum, roughness, diameter, flowRegime)
     pressureDrop = calculatePressureDrop(
         friction, length, diameter, density, averageVelocity
     )
