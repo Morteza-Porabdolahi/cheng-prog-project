@@ -11,7 +11,7 @@ pipesWithRoughness = {
     "Galvanized Iron": 0.00015,
     "Glass (Smooth)": 0.000001,
     "Asbestos Cement": 0.00006,
-    "Plastic (Polyethylene, etc.)": 0.0000015
+    "Plastic (Polyethylene, etc.)": 0.0000015,
 }
 
 listOfPipes = list(pipesWithRoughness)
@@ -40,26 +40,28 @@ def defineFlowRegime(reynoldsNum):
         return "Transition"
 
 
-def calculateFrictionFactor(reynoldsNum, roughness, diameter, flowRegime):
+def calculateFrictionFactor(reynoldsNum, roughness, diameter):
+    flowRegime = defineFlowRegime(reynoldsNum)
+
     if flowRegime == "Laminar":
         return 64 / reynoldsNum
     elif flowRegime == "Turbulent":
         # 0.02 is an initial guess
         return fsolve(
-            calculateFrictionInTurbulent(roughness, reynoldsNum, diameter), 0.02
+            calculateFrictionInTurbulent, 0.02, (roughness, reynoldsNum, diameter)
         )[0]
     else:
         frictionInLaminar = 64 / reynoldsNum
         # 0.02 is an initial guess
         frictionInTurbulent = fsolve(
-            calculateFrictionInTurbulent(roughness, reynoldsNum, diameter), 0.02
+            calculateFrictionInTurbulent, 0.02, (roughness, reynoldsNum, diameter)
         )[0]
 
         return (frictionInTurbulent + frictionInLaminar) / 2
 
 
-def calculateFrictionInTurbulent(roughness, reynoldsNum, diameter):
-    return lambda friction: (1 / np.sqrt(friction)) + 2 * np.log10(
+def calculateFrictionInTurbulent(friction, roughness, reynoldsNum, diameter):
+    return (1 / np.sqrt(friction)) + 2 * np.log10(
         ((roughness / diameter) / 3.7) + (2.51 / (reynoldsNum * np.sqrt(friction)))
     )
 
@@ -68,7 +70,7 @@ def calculatePressureDrop(friction, length, diameter, density, averageVelocity):
     return friction * (length / diameter) * ((density * averageVelocity**2) / 2)
 
 
-def returnValidatedUserInput(message):
+def validateUserInput(message):
     while True:
         try:
             userInput = float(input(message))
@@ -80,7 +82,7 @@ def returnValidatedUserInput(message):
     return userInput
 
 
-def returnValidatedPipeSelection(message):
+def validatedPipeSelection(message):
     while True:
         try:
             userInput = input(message)
@@ -104,17 +106,17 @@ def returnValidatedPipeSelection(message):
     
 
 def getInputsFromUser():
-    density = returnValidatedUserInput("Density (kg/m^3): ")
-    viscosity = returnValidatedUserInput("Viscosity (Pa.S): ")
-    volumetricFlowRate = returnValidatedUserInput("Volumetric Flow Rate (m^3 / s): ")
+    density = validateUserInput("Density (kg/m^3): ")
+    viscosity = validateUserInput("Viscosity (Pa.S): ")
+    volumetricFlowRate = validateUserInput("Volumetric Flow Rate (m^3 / s): ")
 
-    diameter = returnValidatedUserInput("Diameter (m): ")
-    length = returnValidatedUserInput("Length of the pipe (m): ")
-    selectedPipe = returnValidatedPipeSelection(f'Please select one of the pipes below or skip to provide a custom roughness (pipes are considered as new ones) \n {" | ".join(numericalListOfPipes)}: ')
+    diameter = validateUserInput("Diameter (m): ")
+    length = validateUserInput("Length of the pipe (m): ")
+    selectedPipe = validatedPipeSelection(f'Please select one of the pipes below or skip to provide a custom roughness (pipes are considered as new ones) \n {" | ".join(numericalListOfPipes)}: ')
     roughness = None
 
     if type(selectedPipe) == type(None):
-        roughness = returnValidatedUserInput("Roughness of the pipe (m): ")
+        roughness = validateUserInput("Roughness of the pipe (m): ")
     elif isinstance(selectedPipe, int):
         roughness = pipesWithRoughness[listOfPipes[selectedPipe - 1]]
 
@@ -129,7 +131,7 @@ def main():
     averageVelocity = calculateAverageVelocity(volumetricFlowRate, diameter)
     reynoldsNum = calculateReynolds(averageVelocity, diameter, viscosity, density)
     flowRegime = defineFlowRegime(reynoldsNum)
-    friction = calculateFrictionFactor(reynoldsNum, roughness, diameter, flowRegime)
+    friction = calculateFrictionFactor(reynoldsNum, roughness, diameter)
     pressureDrop = calculatePressureDrop(
         friction, length, diameter, density, averageVelocity
     )
