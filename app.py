@@ -112,7 +112,7 @@ def getInputsFromUser():
 
     diameter = validateUserInput("Diameter (m): ")
     length = validateUserInput("Length of the pipe (m): ")
-    selectedPipe = validatedPipeSelection(f'Please select one of the pipes below or skip to provide a custom roughness (pipes are considered as new ones) \n {" | ".join(numericalListOfPipes)}: ')
+    selectedPipe = validatedPipeSelection(f'\033[92mPlease select one of the pipes below or skip to provide a custom roughness (pipes are considered as new ones)\033[00m \n {" | ".join(numericalListOfPipes)}: ')
     roughness = None
 
     if type(selectedPipe) == type(None):
@@ -126,6 +126,8 @@ def getInputsFromUser():
 
 
 def main():
+    print('\033[93mPipeline Fluid Flow Calculator\033[00m')
+    
     density, viscosity, volumetricFlowRate, diameter, length, roughness = getInputsFromUser();
 
     averageVelocity = calculateAverageVelocity(volumetricFlowRate, diameter)
@@ -139,7 +141,7 @@ def main():
     uptoFourDecimalsFormatter = "%.4f"
 
     print(
-        f"The flow regime in the pipe is {flowRegime} based on calculated Reynolds number ({uptoFourDecimalsFormatter%reynoldsNum}) and also based on friction factor ({uptoFourDecimalsFormatter%friction}), the pressure drop is roughly {uptoFourDecimalsFormatter%(pressureDrop / 1000)}kPa."
+        f"\033[96mThe flow regime in the pipe is {flowRegime} based on calculated Reynolds number ({uptoFourDecimalsFormatter%reynoldsNum}) and also based on friction factor ({uptoFourDecimalsFormatter%friction}), the pressure drop is roughly {uptoFourDecimalsFormatter%(pressureDrop / 1000)}kPa.\033[00m"
     )
 
 
